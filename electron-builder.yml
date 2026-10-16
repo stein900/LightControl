@@ -1,0 +1,52 @@
+appId: app.lightcontrol.desktop
+productName: LightControl
+copyright: Copyright © 2026 LightControl
+directories:
+  buildResources: build
+  output: release/${version}
+files:
+  - out/**/*
+  - package.json
+  - '!**/*.map'
+# The OpenRGB engine is a separate GPL-2.0 program, shipped next to the app
+# archive and driven exclusively through its SDK network protocol. The iCUE SDK
+# runtime is Corsair's redistributable DLL, loaded by an isolated utility process.
+extraResources:
+  - from: vendor/openrgb
+    to: openrgb
+    filter:
+      - '**/*'
+  - from: vendor/icuesdk
+    to: icuesdk
+  - from: resources/icons
+    to: icons
+  - from: THIRD_PARTY_NOTICES.md
+    to: THIRD_PARTY_NOTICES.md
+asar: true
+compression: normal
+# Hardening: the packaged binary cannot be repurposed as a Node runtime,
+# ignores inspector flags and only loads the integrity-checked app archive.
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: false
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+  icon: build/icon.ico
+  executableName: LightControl
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  shortcutName: LightControl
+  uninstallDisplayName: LightControl
+  artifactName: ${productName}-Setup-${version}.${ext}
+  deleteAppDataOnUninstall: false

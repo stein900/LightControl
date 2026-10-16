@@ -1,0 +1,283 @@
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.titleIcon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.editable {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.editableInput {
+  font-size: 20px;
+  font-weight: 600;
+  height: 34px;
+  width: 360px;
+}
+
+.editButton {
+  opacity: 0;
+  transition: opacity var(--duration) var(--ease);
+}
+
+.editable:hover .editButton,
+.editButton:focus-visible {
+  opacity: 1;
+}
+
+/* --------------------------------- Zones --------------------------------- */
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  min-height: 420px;
+}
+
+.zoneList {
+  border-right: 1px solid var(--border);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.zone {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: background var(--duration) var(--ease);
+}
+
+.zone:hover {
+  background: var(--surface-hover);
+}
+
+.zone[aria-pressed='true'] {
+  background: var(--surface-active);
+}
+
+.zoneHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.zoneName {
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.zoneMeta {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.zoneEffect {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.zoneUnconfigured {
+  color: var(--warning);
+  font-size: 12px;
+}
+
+.editorPane {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.editorHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editorTitle {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.editorNote {
+  color: var(--text-secondary);
+}
+
+.editorActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ------------------------------- Zone setup ------------------------------- */
+
+.setupRow {
+  display: grid;
+  /* Fixed trailing columns keep the name inputs aligned whether or not a zone is resizable. */
+  grid-template-columns: minmax(180px, 1fr) minmax(200px, 300px) 168px 28px;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+}
+
+.setupRow + .setupRow {
+  border-top: 1px solid var(--border);
+}
+
+.setupName {
+  font-weight: 600;
+}
+
+.setupHint {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.setupSize {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  justify-self: end;
+}
+
+.fixedSize {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  justify-self: end;
+}
+
+.setupHelp {
+  padding: 12px 20px 16px;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  background: var(--bg-elevated);
+}
+
+/* ------------------------------ White balance ------------------------------ */
+
+.balance {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 200px;
+  gap: 28px;
+  align-items: start;
+}
+
+.channels {
+  display: grid;
+  gap: 14px;
+}
+
+.channel {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.channelLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.channelDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.whitePreview {
+  display: grid;
+  gap: 8px;
+}
+
+.whiteSwatch {
+  height: 96px;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.3);
+}
+
+.whiteCaption {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  text-align: center;
+}
+
+.testRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.testLabel {
+  font-weight: 500;
+}
+
+.testText {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+
+/* ------------------------------ Hardware mode ------------------------------ */
+
+.hardware {
+  display: grid;
+  gap: 18px;
+}
+
+.hardwareRow {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  align-items: center;
+  gap: 16px;
+}
+
+.hardwareLabel {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.persist {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}

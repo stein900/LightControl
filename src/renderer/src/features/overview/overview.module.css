@@ -1,0 +1,58 @@
+.devices {
+  display: flex;
+  flex-direction: column;
+}
+
+.device {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) minmax(160px, 300px) 16px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  text-align: left;
+  transition: background var(--duration) var(--ease);
+}
+
+.device + .device {
+  border-top: 1px solid var(--border);
+}
+
+.device:hover {
+  background: var(--surface-hover);
+}
+
+.deviceIcon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.deviceName {
+  font-weight: 600;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.deviceMeta {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  color: var(--text-tertiary);
+}
+
+.previewEmpty {
+  color: var(--text-tertiary);
+  font-size: 12px;
+  text-align: right;
+}

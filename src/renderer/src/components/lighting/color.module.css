@@ -1,0 +1,138 @@
+.picker {
+  display: grid;
+  gap: 12px;
+}
+
+.area {
+  position: relative;
+  height: 148px;
+  border-radius: var(--radius-md);
+  cursor: crosshair;
+  touch-action: none;
+  /* Functional color space: white to hue horizontally, transparent to black vertically. */
+  background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.hue {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: none;
+  background: linear-gradient(to right, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00);
+}
+
+.thumb {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.35),
+    0 1px 4px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+
+.hue .thumb {
+  top: 50%;
+}
+
+.inputs {
+  display: grid;
+  grid-template-columns: 1.4fr repeat(3, 1fr);
+  gap: 6px;
+}
+
+.inputs label {
+  display: grid;
+  gap: 4px;
+  color: var(--text-tertiary);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.inputs input {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  height: 30px;
+  padding: 0 8px;
+}
+
+.presets {
+  display: grid;
+  gap: 8px;
+}
+
+.presetGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.presetLabel {
+  width: 56px;
+  color: var(--text-tertiary);
+  font-size: 11.5px;
+}
+
+.swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.35);
+  transition: transform var(--duration) var(--ease);
+}
+
+.swatch:hover {
+  transform: scale(1.08);
+}
+
+/* ------------------------------- Color list ------------------------------- */
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.listSwatch {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px rgba(127, 127, 127, 0.35);
+  transition: box-shadow var(--duration) var(--ease);
+}
+
+.listSwatch[aria-pressed='true'] {
+  box-shadow:
+    inset 0 0 0 1px rgba(127, 127, 127, 0.35),
+    0 0 0 2px var(--bg),
+    0 0 0 4px var(--text);
+}
+
+.addSwatch {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-strong);
+  color: var(--text-secondary);
+}
+
+.addSwatch:hover {
+  color: var(--text);
+  border-color: var(--text-tertiary);
+}
+
+.listHint {
+  margin-left: auto;
+}

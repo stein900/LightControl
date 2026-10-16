@@ -1,0 +1,307 @@
+/* ------------------------------- Button ------------------------------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  transition:
+    background var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease),
+    opacity var(--duration) var(--ease);
+}
+
+.button svg {
+  flex-shrink: 0;
+}
+
+.button:disabled {
+  opacity: 0.45;
+}
+
+.sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+
+.primary {
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+.secondary {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.ghost {
+  color: var(--text-secondary);
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.danger {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--danger);
+}
+
+.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.iconOnly {
+  width: 32px;
+  padding: 0;
+}
+
+.sm.iconOnly {
+  width: 28px;
+}
+
+/* ------------------------------- Switch ------------------------------- */
+
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--track);
+  transition: background var(--duration) var(--ease);
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  transition:
+    transform var(--duration) var(--ease),
+    background var(--duration) var(--ease);
+}
+
+.switch[aria-checked='true'] {
+  background: var(--primary);
+}
+
+.switch[aria-checked='true']::after {
+  transform: translateX(14px);
+  background: var(--primary-fg);
+}
+
+.switch:disabled {
+  opacity: 0.45;
+}
+
+/* ------------------------------- Slider ------------------------------- */
+
+.slider {
+  display: grid;
+  grid-template-columns: 1fr 44px;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.range {
+  --fill: 50%;
+  appearance: none;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.range::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 4px;
+  background: linear-gradient(to right, var(--primary) var(--fill), var(--track) var(--fill));
+}
+
+.range::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 3px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--border-strong);
+  transition: transform var(--duration) var(--ease);
+}
+
+.range:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+}
+
+.range:focus-visible {
+  outline: none;
+}
+
+.range:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+.range:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sliderValue {
+  text-align: right;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* -------------------------- Segmented control -------------------------- */
+
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 12.5px;
+  transition:
+    background var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.segment:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.segment[aria-checked='true'] {
+  background: var(--surface-active);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--border-strong);
+}
+
+.segment:disabled {
+  opacity: 0.4;
+}
+
+/* ----------------------------- Text inputs ----------------------------- */
+
+.input {
+  height: 32px;
+  width: 100%;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  transition: border-color var(--duration) var(--ease);
+}
+
+.input:hover {
+  border-color: var(--text-tertiary);
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.select {
+  appearance: none;
+  padding-right: 30px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-secondary) 50%),
+    linear-gradient(135deg, var(--text-secondary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 15px) 14px,
+    calc(100% - 11px) 14px;
+  background-size:
+    4px 4px,
+    4px 4px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+.select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: stretch;
+  height: 32px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.stepper button {
+  width: 30px;
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+  background: var(--surface);
+}
+
+.stepper button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.stepper button:disabled {
+  opacity: 0.4;
+}
+
+.stepper input {
+  width: 56px;
+  border: none;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+.stepper input:focus-visible {
+  outline: none;
+  background: var(--surface-hover);
+}

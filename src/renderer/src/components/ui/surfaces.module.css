@@ -1,0 +1,345 @@
+/* --------------------------------- Page --------------------------------- */
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 28px 40px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 4px;
+}
+
+.pageTitle {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.pageSubtitle {
+  margin-top: 4px;
+  color: var(--text-secondary);
+}
+
+.pageActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* -------------------------------- Section -------------------------------- */
+
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.sectionDescription {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  max-width: 640px;
+}
+
+.sectionBody {
+  padding: 20px;
+}
+
+.sectionBodyFlush {
+  padding: 0;
+}
+
+/* --------------------------------- Field --------------------------------- */
+
+.field {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) minmax(220px, 1.2fr);
+  align-items: center;
+  gap: 24px;
+  padding: 14px 20px;
+}
+
+.field + .field {
+  border-top: 1px solid var(--border);
+}
+
+.fieldStacked {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.fieldLabel {
+  font-weight: 500;
+}
+
+.fieldDescription {
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+
+.fieldControl {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fieldStacked .fieldControl {
+  justify-content: flex-start;
+}
+
+/* --------------------------------- Badge --------------------------------- */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+}
+
+.badge.success {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: transparent;
+}
+
+.badge.warning {
+  color: var(--warning);
+  background: var(--warning-soft);
+  border-color: transparent;
+}
+
+.badge.danger {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: transparent;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* --------------------------------- Banner --------------------------------- */
+
+.banner {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.banner > svg {
+  margin-top: 1px;
+}
+
+.banner.warning > svg {
+  color: var(--warning);
+}
+
+.banner.danger > svg {
+  color: var(--danger);
+}
+
+.banner.info > svg {
+  color: var(--text-secondary);
+}
+
+.bannerTitle {
+  font-weight: 600;
+}
+
+.bannerText {
+  margin-top: 2px;
+  color: var(--text-secondary);
+}
+
+.bannerActions {
+  display: flex;
+  gap: 8px;
+  align-self: center;
+}
+
+/* --------------------------------- Dialog --------------------------------- */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: var(--overlay);
+  animation: fade 120ms var(--ease);
+}
+
+.dialog {
+  width: min(440px, calc(100vw - 48px));
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  animation: rise 160ms var(--ease);
+}
+
+.dialogBody {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dialogTitle {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.dialogText {
+  color: var(--text-secondary);
+}
+
+.dialogFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* --------------------------------- Toasts --------------------------------- */
+
+.toasts {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 360px;
+}
+
+.toast {
+  display: grid;
+  grid-template-columns: 16px 1fr 20px;
+  gap: 10px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-popover);
+  animation: rise 160ms var(--ease);
+}
+
+.toast > svg {
+  margin-top: 2px;
+}
+
+.toast.error > svg {
+  color: var(--danger);
+}
+
+.toast.success > svg {
+  color: var(--success);
+}
+
+.toastClose {
+  color: var(--text-tertiary);
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
+}
+
+.toastClose:hover {
+  color: var(--text);
+}
+
+/* ------------------------------- Empty state ------------------------------- */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 48px 24px;
+  color: var(--text-secondary);
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+
+.emptyTitle {
+  color: var(--text);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.emptyActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+}

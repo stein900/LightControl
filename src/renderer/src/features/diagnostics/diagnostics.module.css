@@ -1,0 +1,29 @@
+.item {
+  display: grid;
+  gap: 4px;
+  padding: 14px 20px;
+}
+
+.item + .item {
+  border-top: 1px solid var(--border);
+}
+
+.itemHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.itemTitle {
+  font-weight: 600;
+}
+
+.itemMeta {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.itemText {
+  color: var(--text-secondary);
+  max-width: 760px;
+}
