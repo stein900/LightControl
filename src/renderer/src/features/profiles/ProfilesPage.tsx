@@ -1,6 +1,7 @@
 import { Bookmark, Pencil, Play, Plus, Save, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import type { ProfileSummary } from '@shared/model'
+import { ProfileSwatch } from '@renderer/components/lighting/ProfileSwatch'
 import { Button, TextInput } from '@renderer/components/ui/controls'
 import {
   Badge,
@@ -23,7 +24,7 @@ type DialogState =
 
 const dateFormat = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' })
 
-function NameDialog({
+export function ProfileNameDialog({
   title,
   initial,
   confirmLabel,
@@ -48,7 +49,7 @@ function NameDialog({
       <TextInput
         value={name}
         maxLength={64}
-        placeholder="Ex. Blanc neutre, Jeu, Nuit"
+        placeholder="Ex. Arc-en-ciel, Rouge et bleu, Violet et blanc"
         aria-label="Nom du profil"
         onChange={(event) => setName(event.target.value)}
       />
@@ -94,6 +95,7 @@ export function ProfilesPage() {
               <div key={profile.id} className={styles.row}>
                 <div className={styles.info}>
                   <div className={styles.name}>
+                    <ProfileSwatch preview={profile.preview} />
                     {profile.name}
                     {active && (
                       <Badge tone="success" dot>
@@ -146,7 +148,7 @@ export function ProfilesPage() {
       </Section>
 
       {dialog?.kind === 'create' && (
-        <NameDialog
+        <ProfileNameDialog
           title="Nouveau profil"
           initial=""
           confirmLabel="Créer"
@@ -158,7 +160,7 @@ export function ProfilesPage() {
         />
       )}
       {dialog?.kind === 'rename' && (
-        <NameDialog
+        <ProfileNameDialog
           title="Renommer le profil"
           initial={dialog.profile.name}
           confirmLabel="Renommer"

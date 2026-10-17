@@ -45,7 +45,8 @@ export async function runningProcesses(): Promise<Set<string>> {
   return names
 }
 
-async function powershellJson<T>(command: string): Promise<T[]> {
+/** Runs a fixed read-only PowerShell query and parses its objects. */
+export async function powershellJson<T>(command: string): Promise<T[]> {
   if (process.platform !== 'win32') return []
   const { code, stdout } = await run('powershell.exe', [
     '-NoProfile',

@@ -20,6 +20,20 @@ export const EFFECT_IDS = [
 
 export const COLOR_MODES = ['none', 'per-led', 'mode-specific', 'random'] as const
 export const THEMES = ['system', 'dark', 'light'] as const
+/** Lit parts of the 3D model of the PC, each fed by one device or zone. */
+export const PC_MODEL_PARTS = [
+  'top-fans',
+  'side-fans',
+  'bottom-fans',
+  'rear-fan',
+  'pump',
+  'memory',
+  'atx-cable',
+  'gpu-cable',
+  'case-strip'
+] as const
+/** Around the 3D model: a furnished desk diorama, or a plain dark stage. */
+export const PC_MODEL_BACKDROPS = ['desk', 'dark'] as const
 /** Operations an integration can offer, such as taking a dongle over from the vendor software. */
 export const INTEGRATION_ACTIONS = ['take-over', 'hand-back'] as const
 
@@ -82,6 +96,26 @@ export const DeviceSettingsSchema = z.object({
 
 export const DeviceSettingsMapSchema = z.record(z.string(), DeviceSettingsSchema)
 
+export const ZoneTargetSchema = z.object({
+  deviceId: identifier,
+  /** Zone index, or null to address every zone of the device. */
+  zoneIndex: z.number().int().min(0).max(4096).nullable()
+})
+
+/**
+ * 3D model of the PC. A part missing from `bindings` follows the automatic
+ * assignment; `null` keeps it unlit. Keys are not checked against
+ * PC_MODEL_PARTS so a renamed part never invalidates the whole settings file.
+ */
+export const PcModelSettingsSchema = z.object({
+  visible: z.boolean().default(true),
+  motion: z.boolean().default(true),
+  backdrop: z.enum(PC_MODEL_BACKDROPS).default('desk'),
+  /** Room lighting, independent of the LEDs. */
+  ambient: percent.default(60),
+  bindings: z.record(z.string(), ZoneTargetSchema.nullable()).default({})
+})
+
 export const EngineSettingsSchema = z.object({
   managed: z.boolean().default(true),
   executablePath: z.string().max(1024).nullable().default(null),
@@ -102,6 +136,13 @@ export const AppSettingsSchema = z.object({
     host: '127.0.0.1',
     port: 6742,
     elevated: false
+  }),
+  pcModel: PcModelSettingsSchema.default({
+    visible: true,
+    motion: true,
+    backdrop: 'desk',
+    ambient: 60,
+    bindings: {}
   })
 })
 
@@ -111,6 +152,14 @@ export const ProfileSchema = z.object({
   createdAt: z.number(),
   updatedAt: z.number(),
   lighting: LightingStateSchema
+})
+
+/** Lian Li devices kept paired with the dongle (copy of the vendor software's list). */
+export const LianliPairingSchema = z.object({
+  paired: z
+    .array(z.string().regex(/^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/))
+    .max(64)
+    .default([])
 })
 
 export const ProfileStoreSchema = z.object({
@@ -140,15 +189,20 @@ export const SettingsPatchSchema = z
         elevated: z.boolean().optional()
       })
       .strict()
+      .optional(),
+    pcModel: z
+      .object({
+        visible: z.boolean().optional(),
+        motion: z.boolean().optional(),
+        backdrop: z.enum(PC_MODEL_BACKDROPS).optional(),
+        ambient: percent.optional(),
+        /** Replaces every binding at once; a part left out returns to the automatic assignment. */
+        bindings: z.partialRecord(z.enum(PC_MODEL_PARTS), ZoneTargetSchema.nullable()).optional()
+      })
+      .strict()
       .optional()
   })
   .strict()
-
-export const ZoneTargetSchema = z.object({
-  deviceId: identifier,
-  /** Zone index, or null to address every zone of the device. */
-  zoneIndex: z.number().int().min(0).max(4096).nullable()
-})
 
 export const SetZoneEffectSchema = ZoneTargetSchema.extend({ effect: EffectConfigSchema })
 

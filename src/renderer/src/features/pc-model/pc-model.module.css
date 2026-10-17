@@ -1,0 +1,143 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* The stage stays dark in both themes: LEDs only read well against a dark backdrop. */
+.stage {
+  position: relative;
+  height: clamp(340px, 46vw, 560px);
+  background: #09090c;
+  overflow: hidden;
+}
+
+.canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+
+.canvas:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.hint {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(9, 9, 12, 0.45);
+  color: rgba(237, 237, 237, 0.7);
+  font-size: 11.5px;
+  pointer-events: none;
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #a1a1a1;
+  text-align: center;
+}
+
+.tooltip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: 280px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: rgba(17, 17, 20, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  color: #ededed;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+
+.tooltip[hidden] {
+  display: none;
+}
+
+.tooltipTitle {
+  font-weight: 600;
+  font-size: 12.5px;
+}
+
+.tooltipText {
+  margin-top: 2px;
+  color: #a1a1a1;
+  font-size: 12px;
+}
+
+.sceneBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: 10px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.ambient {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  max-width: 340px;
+  min-width: 200px;
+  color: var(--text-secondary);
+}
+
+.ambient > :last-child {
+  flex: 1;
+}
+
+.bindings {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+}
+
+.bindingsIntro {
+  padding: 14px 20px 6px;
+  color: var(--text-secondary);
+}
+
+.binding {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) minmax(80px, 180px) minmax(240px, 380px);
+  align-items: center;
+  gap: 16px;
+  padding: 8px 20px;
+  transition: background var(--duration) var(--ease);
+}
+
+.binding:hover,
+.binding:focus-within {
+  background: var(--surface-hover);
+}
+
+.bindingLabel {
+  font-weight: 500;
+}
+
+.bindingOff {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.bindingsFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 20px 14px;
+}

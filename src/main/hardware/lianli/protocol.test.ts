@@ -1,13 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import {
   MASTER_CHANNELS,
+  addressApplied,
+  addressFrame,
   createRgbUpload,
   deviceLayout,
   discoveryQuery,
+  isMasterless,
   masterQuery,
   parseDiscovery,
   parseMasterReply,
   rgbFrames,
+  saveConfigFrame,
   trafficChannel,
   usbPackets
 } from './protocol'
@@ -34,6 +38,7 @@ function record(fields: {
   bytes[19] = fields.fans
   bytes.splice(20, 4, 0x81, 2, 3, 4)
   bytes[24] = fields.fanType
+  bytes.splice(36, 4, 100, 150, 200, 0)
   bytes[41] = 0x1c
   return bytes
 }
@@ -150,5 +155,36 @@ describe('Lian Li wireless protocol', () => {
     expect(() => createRgbUpload([], 50)).toThrow()
     expect(() => createRgbUpload([new Uint8Array(256 * 3)], 50)).toThrow()
     expect(() => createRgbUpload([solid(9, [0, 0, 0]), solid(10, [0, 0, 0])], 50)).toThrow()
+  })
+
+  it('re-pairs a device with the vendor address frame and checks the new address', () => {
+    const reply = Uint8Array.from([
+      0x10,
+      1,
+      0x80,
+      0,
+      ...record({ mac: 0xaa, master: 0, channel: 8, rx: 254, type: 1, fans: 0, fanType: 0 })
+    ])
+    const device = parseDiscovery(reply, 1)!.devices[0]!
+    expect(isMasterless(device)).toBe(true)
+    expect([...device.currentPwm]).toEqual([100, 150, 200, 0])
+
+    const master = Uint8Array.from([9, 9, 9, 9, 9, 9])
+    const frame = addressFrame(device, master, 7, 8, 2)
+    // Reference vector from lian-li-linux (bind_packet_preserves_separate_rx_and_sensor_group_index).
+    expect([...frame.subarray(0, 21)]).toEqual([
+      0x12, 0x10, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 9, 9, 9, 9, 9, 9, 7, 8, 2, 100, 150, 200, 0
+    ])
+    expect(frame.length).toBe(240)
+    expect(frame.subarray(21).every((byte) => byte === 0)).toBe(true)
+
+    const save = saveConfigFrame(master)
+    expect([...save.subarray(0, 15)]).toEqual([
+      0x12, 0x15, 255, 255, 255, 255, 255, 255, 9, 9, 9, 9, 9, 9, 255
+    ])
+
+    expect(addressApplied(device, master, 7, 8)).toBe(false)
+    expect(addressApplied({ ...device, masterMac: master, rxType: 7, channel: 8 }, master, 7, 8)).toBe(true)
+    expect(addressApplied({ ...device, masterMac: master, rxType: 7, channel: 3 }, master, 7, 8)).toBe(false)
   })
 })

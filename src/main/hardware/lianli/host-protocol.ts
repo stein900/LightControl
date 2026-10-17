@@ -2,7 +2,9 @@
 import type { WirelessFamily } from './protocol'
 
 export type LianliHostRequest =
-  | { type: 'start'; dllPath: string }
+  /** `paired`: MAC addresses of the user's pairing list, in pairing order. */
+  | { type: 'start'; dllPath: string; paired: string[] }
+  | { type: 'pairing'; paired: string[] }
   /** Animation for one device, in the LED order published with it; replaces any pending one. */
   | { type: 'upload'; mac: string; frames: Uint8Array[]; intervalMs: number }
   /** Tries to open the dongle now instead of waiting for the next retry. */

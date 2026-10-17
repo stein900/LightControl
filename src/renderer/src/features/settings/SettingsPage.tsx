@@ -99,6 +99,16 @@ export function SettingsPage() {
             format={(v) => `${v} i/s`}
           />
         </Field>
+        <Field
+          label="Modèle 3D du PC"
+          description="Affiche l’aperçu 3D de l’éclairage sur la vue d’ensemble. Il ne consomme rien quand il n’est pas à l’écran."
+        >
+          <Switch
+            label="Modèle 3D du PC"
+            checked={settings.pcModel.visible}
+            onChange={(visible) => update({ pcModel: { visible } })}
+          />
+        </Field>
       </Section>
 
       <Section

@@ -22,17 +22,28 @@ import type {
 const RESTART_DELAY_MS = 3000
 const STOP_TIMEOUT_MS = 1500
 
-/** State of the vendor software that normally owns the dongle. */
-export type DongleOwnerState = 'running' | 'stopped' | 'absent'
+/**
+ * State of the vendor software that normally owns the dongle. `active`: it
+ * holds the dongle. `autostart`: stopped, but it starts again with Windows.
+ */
+export type DongleOwnerState = 'active' | 'autostart' | 'stopped' | 'absent'
 
 /** The vendor software (L-Connect 3) that LightControl takes the dongle from and gives it back to. */
 export interface DongleOwner {
   name: string
   state(): Promise<DongleOwnerState>
+  /** Devices the user paired with the vendor software, in pairing order; null when it has no list. */
+  pairedDevices(): Promise<string[] | null>
   /** Stops the vendor software (administrator prompt); resolves false when refused. */
   takeOver(): Promise<boolean>
   /** Restores and restarts the vendor software (administrator prompt); resolves false when refused. */
   handBack(): Promise<boolean>
+}
+
+/** LightControl's own copy of the pairing list, used when the vendor software's is unavailable. */
+export interface PairingStore {
+  load(): string[]
+  save(paired: string[]): void
 }
 
 export interface LianliBackendOptions {
@@ -41,6 +52,7 @@ export interface LianliBackendOptions {
   /** Built host script (out/main/lianli-host.js). */
   hostScript: string
   owner: DongleOwner
+  pairing: PairingStore
   logger: Logger
 }
 
@@ -128,6 +140,10 @@ export function toDeviceInfo(device: LianliDevice): DeviceInfo {
  * through their USB dongle. The dongle is opened exclusively, so it is shared
  * with L-Connect 3 by handing it over explicitly: LightControl stops L-Connect
  * to take over, and restores it on hand-back.
+ *
+ * Pairing stays the vendor software's job. Devices forget their master when
+ * they lose power, so the host re-pairs, at each start, the devices listed in
+ * L-Connect's pairing list (or LightControl's copy of it), as L-Connect does.
  */
 export class LianliBackend implements HardwareBackend {
   readonly events = new TypedEmitter<HardwareBackendEvents>()
@@ -150,8 +166,13 @@ export class LianliBackend implements HardwareBackend {
   private mapped = new Map<string, { info: DeviceInfo; mac: string }>()
   private restartTimer: NodeJS.Timeout | null = null
   private missingDll = false
+  private paired: string[]
+  /** False when the vendor software has no pairing list: LightControl's own copy is authoritative. */
+  private vendorPairing = false
 
-  constructor(private readonly options: LianliBackendOptions) {}
+  constructor(private readonly options: LianliBackendOptions) {
+    this.paired = options.pairing.load()
+  }
 
   get devices(): readonly DeviceInfo[] {
     return [...this.mapped.values()].map((entry) => entry.info)
@@ -171,6 +192,7 @@ export class LianliBackend implements HardwareBackend {
       return
     }
     void this.refreshOwner()
+    void this.refreshPairing()
     if (!this.released) this.spawn()
   }
 
@@ -190,6 +212,7 @@ export class LianliBackend implements HardwareBackend {
   rescan(): void {
     this.send({ type: 'retry' })
     void this.refreshOwner()
+    void this.refreshPairing()
   }
 
   enterDirectMode(): void {
@@ -233,6 +256,8 @@ export class LianliBackend implements HardwareBackend {
     if (!(await this.options.owner.takeOver())) return false
     this.options.logger.info(`Took the Lian Li dongle over from ${this.options.owner.name}`)
     this.released = false
+    // Devices may have been paired in the vendor software in the meantime.
+    await this.refreshPairing()
     if (!this.running) return true
     if (this.host) this.send({ type: 'retry' })
     else this.spawn()
@@ -250,6 +275,21 @@ export class LianliBackend implements HardwareBackend {
     this.released = false
     if (this.running) this.spawn()
     return false
+  }
+
+  private async refreshPairing(): Promise<void> {
+    const vendor = await this.options.owner.pairedDevices().catch(() => null)
+    this.vendorPairing = vendor !== null
+    const paired = vendor ?? this.options.pairing.load()
+    if (vendor) this.options.pairing.save(vendor)
+    this.setPairing(paired)
+  }
+
+  private setPairing(paired: string[]): void {
+    if (JSON.stringify(paired) === JSON.stringify(this.paired)) return
+    this.paired = paired
+    this.options.logger.info(`Lian Li pairing list: ${paired.join(', ') || 'empty'}`)
+    this.send({ type: 'pairing', paired })
   }
 
   private async refreshOwner(): Promise<void> {
@@ -283,7 +323,7 @@ export class LianliBackend implements HardwareBackend {
         if (this.running && !this.released) this.spawn()
       }, RESTART_DELAY_MS)
     })
-    this.send({ type: 'start', dllPath: this.options.dllPath })
+    this.send({ type: 'start', dllPath: this.options.dllPath, paired: this.paired })
     this.events.emit('status')
   }
 
@@ -320,7 +360,13 @@ export class LianliBackend implements HardwareBackend {
     }
   }
 
-  private setDevices(devices: LianliDevice[], unbound: number): void {
+  private setDevices(heard: LianliDevice[], unbound: number): void {
+    // Pairing order, not radio order, so the list stays stable from one start to the next.
+    const rank = (device: LianliDevice): number => {
+      const index = this.paired.indexOf(device.mac)
+      return index === -1 ? Number.MAX_SAFE_INTEGER : index
+    }
+    const devices = [...heard].sort((a, b) => rank(a) - rank(b) || a.mac.localeCompare(b.mac))
     const next = new Map(
       devices.map((device) => [
         `lianli-${device.mac.replaceAll(':', '')}`,
@@ -332,6 +378,13 @@ export class LianliBackend implements HardwareBackend {
       JSON.stringify([...this.mapped.values()].map((entry) => entry.info))
     this.mapped = next
     this.unbound = unbound
+    // Without a vendor list, devices found paired with this dongle are remembered for the next start.
+    const extra = devices.map((device) => device.mac).filter((mac) => !this.paired.includes(mac))
+    if (!this.vendorPairing && extra.length > 0) {
+      const paired = [...this.paired, ...extra]
+      this.options.pairing.save(paired)
+      this.setPairing(paired)
+    }
     if (changed) {
       if (devices.length > 0) {
         this.options.logger.info(
@@ -392,6 +445,13 @@ export class LianliBackend implements HardwareBackend {
         this.unbound > 0
           ? `${this.unbound} appareil${this.unbound > 1 ? 's' : ''} à proximité ${this.unbound > 1 ? 'ne sont' : 'n’est'} pas appairé${this.unbound > 1 ? 's' : ''} à ce dongle.`
           : null
+      if (this.ownerState === 'autostart') {
+        return {
+          state,
+          message: `${owner} se relance encore au démarrage de Windows et reprendrait le dongle. Terminez la prise de contrôle pour l’en empêcher.`,
+          actions: ['take-over', 'hand-back']
+        }
+      }
       return {
         state,
         message:

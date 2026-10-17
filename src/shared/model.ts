@@ -16,16 +16,22 @@ import type {
   HardwareModeConfigSchema,
   INTEGRATION_ACTIONS,
   LightingStateSchema,
+  PC_MODEL_BACKDROPS,
+  PC_MODEL_PARTS,
+  PcModelSettingsSchema,
   ProfileSchema,
   SettingsPatchSchema,
   THEMES,
-  WhiteBalanceSchema
+  WhiteBalanceSchema,
+  ZoneTargetSchema
 } from './schemas'
 
 export type EffectId = (typeof EFFECT_IDS)[number]
 export type ColorMode = (typeof COLOR_MODES)[number]
 export type Theme = (typeof THEMES)[number]
 export type IntegrationAction = (typeof INTEGRATION_ACTIONS)[number]
+export type PcModelPart = (typeof PC_MODEL_PARTS)[number]
+export type PcModelBackdrop = (typeof PC_MODEL_BACKDROPS)[number]
 
 export type EffectConfig = z.infer<typeof EffectConfigSchema>
 export type HardwareModeConfig = z.infer<typeof HardwareModeConfigSchema>
@@ -35,6 +41,8 @@ export type WhiteBalance = z.infer<typeof WhiteBalanceSchema>
 export type DeviceSettings = z.infer<typeof DeviceSettingsSchema>
 export type EngineSettings = z.infer<typeof EngineSettingsSchema>
 export type AppSettings = z.infer<typeof AppSettingsSchema>
+export type PcModelSettings = z.infer<typeof PcModelSettingsSchema>
+export type ZoneTarget = z.infer<typeof ZoneTargetSchema>
 export type SettingsPatch = z.infer<typeof SettingsPatchSchema>
 export type Profile = z.infer<typeof ProfileSchema>
 export type ControlMode = DeviceLighting['control']
@@ -193,6 +201,14 @@ export interface ProfileSummary {
   id: string
   name: string
   updatedAt: number
+  preview: ProfilePreview
+}
+
+/** What a profile looks like at a glance: its main effect and colors. */
+export interface ProfilePreview {
+  power: boolean
+  effect: EffectId
+  colors: Rgb[]
 }
 
 export interface AppSnapshot {

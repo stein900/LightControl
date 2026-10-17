@@ -12,7 +12,9 @@ import { deviceName, kindLabel, plural } from '@renderer/lib/labels'
 import { deviceMode, deviceStatus } from '@renderer/lib/status'
 import { useThrottled } from '@renderer/lib/use-throttled'
 import { run, useAppStore, useSnapshot } from '@renderer/store/app-store'
+import { PcModelSection } from '@renderer/features/pc-model/PcModelSection'
 import { EngineBanner } from './EngineBanner'
+import { ProfileBar } from './ProfileBar'
 import styles from './overview.module.css'
 
 function DeviceRow({ snapshot, device }: { snapshot: AppSnapshot; device: DeviceInfo }) {
@@ -81,7 +83,7 @@ export function OverviewPage() {
         <Banner
           key={integration.id}
           tone="warning"
-          title={`${integration.name} : contrôle détenu par un autre logiciel`}
+          title={`${integration.name} : action requise`}
           actions={<IntegrationActions integration={{ ...integration, actions: ['take-over'] }} />}
         >
           {integration.message}
@@ -139,6 +141,10 @@ export function OverviewPage() {
             .join(', ')}
         </Banner>
       )}
+
+      {snapshot.settings.pcModel.visible && <PcModelSection />}
+
+      <ProfileBar />
 
       <Section title="Contrôle global" flush>
         <Field label="Éclairage" description="Allume ou éteint toutes les LED pilotées par LightControl.">

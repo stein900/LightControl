@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { JsonStore } from '@main/core/json-store'
 import { TypedEmitter } from '@main/core/typed-emitter'
-import type { LightingState, Profile, ProfileSummary } from '@shared/model'
+import type { LightingState, Profile, ProfilePreview, ProfileSummary } from '@shared/model'
 import type { ProfileStoreSchema } from '@shared/schemas'
 import type { z } from 'zod'
 
@@ -9,6 +9,18 @@ type ProfileStore = z.output<typeof ProfileStoreSchema>
 
 export interface ProfileEvents {
   changed: []
+}
+
+/**
+ * Main look of a lighting state: the synchronised effect, or else the effect of
+ * the first zone set up on its own.
+ */
+export function profilePreview(lighting: LightingState): ProfilePreview {
+  const own = Object.values(lighting.devices)
+    .filter((device) => device.control === 'software' && !device.followSync)
+    .flatMap((device) => Object.values(device.zones))[0]
+  const effect = lighting.sync || !own ? lighting.syncEffect : own
+  return { power: lighting.power, effect: effect.id, colors: effect.colors }
 }
 
 export class ProfileNotFoundError extends Error {
@@ -29,7 +41,12 @@ export class ProfileService {
   }
 
   summaries(): ProfileSummary[] {
-    return this.data.profiles.map(({ id, name, updatedAt }) => ({ id, name, updatedAt }))
+    return this.data.profiles.map(({ id, name, updatedAt, lighting }) => ({
+      id,
+      name,
+      updatedAt,
+      preview: profilePreview(lighting)
+    }))
   }
 
   get(id: string): Profile {

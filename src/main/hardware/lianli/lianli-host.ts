@@ -8,6 +8,10 @@
  * device should play and checks the animation identifier the device reports
  * back: an upload lost on the air, or a device that restarted (power loss)
  * and fell back to its default effect, is sent again.
+ *
+ * Devices also forget their master when they lose power. Like the vendor
+ * software at each start, the host points the devices of the user's pairing
+ * list back to this dongle; devices outside that list are never touched.
  */
 import type {
   LianliDevice,
@@ -16,12 +20,18 @@ import type {
   LianliHostState,
   LianliUnavailableReason
 } from './host-protocol'
-import { LibUsb, UsbError } from './libusb'
+import { LibUsb, sleepSync, UsbError } from './libusb'
 import {
+  RX_BROADCAST,
+  RX_SLOT_LIMIT,
+  addressApplied,
   boundTo,
   effectApplied,
   fitRgbUpload,
+  isMasterless,
+  isValidRx,
   macToString,
+  type DiscoveryResult,
   type RgbUpload,
   type WirelessDevice
 } from './protocol'
@@ -38,8 +48,11 @@ const MAX_ATTEMPTS = 4
 const BACKOFF_POLLS = 30
 /** Polls a device may be missing from discovery (RF loss) before it is considered gone. */
 const MISSING_POLLS = 5
-/** Uploads are addressed to every slot; the MAC inside the frame selects the recipient. */
-const RX_BROADCAST = 0xff
+/** A device being re-paired is checked this often, for at most READDRESS_TIMEOUT_MS. */
+const READDRESS_CHECK_MS = 150
+const READDRESS_TIMEOUT_MS = 5000
+/** Polls to wait before trying again to re-pair a device that did not answer. */
+const READDRESS_BACKOFF_POLLS = 15
 
 interface Target {
   frames: Uint8Array[]
@@ -68,6 +81,9 @@ let state: { state: LianliHostState; message: string | null; reason: LianliUnava
   null
 const seen = new Map<string, Seen>()
 const targets = new Map<string, Target>()
+/** The user's pairing list, in order: these devices are kept bound to this dongle. */
+let paired: string[] = []
+const readdressBackoff = new Map<string, number>()
 /** Animation each device was last reported playing, to announce every change once. */
 const announced = new Map<string, string>()
 
@@ -142,7 +158,8 @@ function tick(): void {
     if (!link) return schedule(retry)
   }
   try {
-    poll()
+    const result = poll()
+    if (result && restorePairing(result)) poll()
     deliver()
   } catch (error) {
     lose(error)
@@ -151,9 +168,9 @@ function tick(): void {
   schedule(POLL_MS)
 }
 
-function poll(): void {
+function poll(): DiscoveryResult | null {
   const result = link!.poll()
-  if (!result) return
+  if (!result) return null
   const ours = boundTo(result.devices, link!.masterMac)
   unbound = result.devices.length - ours.length
   const heard = new Set<string>()
@@ -173,6 +190,61 @@ function poll(): void {
   }
   for (const target of targets.values()) if (target.sentPolls >= 0) target.sentPolls += 1
   publish()
+  return result
+}
+
+/** Re-pairs the devices of the pairing list that came back without a master; true when one was. */
+function restorePairing(result: DiscoveryResult): boolean {
+  const master = link!.masterMac
+  const used = new Set(boundTo(result.devices, master).map((device) => device.rxType))
+  let restored = false
+  for (const device of result.devices) {
+    const mac = macToString(device.mac)
+    const slot = paired.indexOf(mac) + 1
+    if (slot === 0 || !isMasterless(device)) continue
+    const wait = readdressBackoff.get(mac) ?? 0
+    if (wait > 0) {
+      readdressBackoff.set(mac, wait - 1)
+      continue
+    }
+    // The slot used by the vendor software (its pairing order), or the first free one.
+    const rx = isValidRx(slot) && !used.has(slot) ? slot : freeSlot(used)
+    if (rx === null) {
+      log('warn', `No free RX slot to re-pair ${mac}`)
+      continue
+    }
+    if (readdress(device, rx, slot)) {
+      log('info', `Re-paired ${mac} with this dongle on slot ${rx}`)
+      used.add(rx)
+      readdressBackoff.delete(mac)
+      restored = true
+    } else {
+      log('warn', `${mac} did not answer the re-pairing request; retrying later`)
+      readdressBackoff.set(mac, READDRESS_BACKOFF_POLLS)
+    }
+  }
+  if (restored) link!.saveConfig()
+  return restored
+}
+
+function freeSlot(used: Set<number>): number | null {
+  for (let rx = 1; rx < RX_SLOT_LIMIT; rx++) if (!used.has(rx)) return rx
+  return null
+}
+
+/** Sends the pairing frame until the device reports the new address, or gives up. */
+function readdress(device: WirelessDevice, rx: number, slot: number): boolean {
+  const current = link!
+  const deadline = Date.now() + READDRESS_TIMEOUT_MS
+  while (Date.now() < deadline) {
+    current.readdress(device, rx, slot)
+    sleepSync(READDRESS_CHECK_MS)
+    const heard = current
+      .poll()
+      ?.devices.find((candidate) => macToString(candidate.mac) === macToString(device.mac))
+    if (heard && addressApplied(heard, current.masterMac, rx, current.masterChannel)) return true
+  }
+  return false
 }
 
 function publish(): void {
@@ -262,6 +334,7 @@ parentPort.on('message', (event: { data: LianliHostRequest }) => {
   switch (request.type) {
     case 'start':
       if (usb) return
+      paired = request.paired
       try {
         usb = new LibUsb(request.dllPath)
       } catch (error) {
@@ -279,6 +352,9 @@ parentPort.on('message', (event: { data: LianliHostRequest }) => {
         attempts: 0
       })
       queueFlush()
+      return
+    case 'pairing':
+      paired = request.paired
       return
     case 'retry':
       if (usb && !link) schedule(0)

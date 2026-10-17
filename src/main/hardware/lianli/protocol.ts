@@ -27,10 +27,17 @@ export const USB_PACKET_SIZE = 64
 const USB_CMD_SEND_RF = 0x10
 const USB_CMD_GET_MAC = 0x11
 const RF_SELECT = 0x12
+/** Sets the fan duty and, with it, the master, RX slot and channel the device follows. */
+const RF_SET_ADDRESS = 0x10
+const RF_SAVE_CONFIG = 0x15
 const RF_SET_RGB = 0x20
 export const RF_DATA_SIZE = 240
 const RF_CHUNK_SIZE = 60
 const RF_CHUNKS = RF_DATA_SIZE / RF_CHUNK_SIZE
+
+/** RX slots are 1 to 13; 0 means none and 254 marks a device that is not paired. */
+export const RX_SLOT_LIMIT = 14
+export const RX_BROADCAST = 0xff
 
 const RECORD_SIZE = 42
 const RECORD_MARKER = 0x1c
@@ -93,6 +100,8 @@ export interface WirelessDevice {
   effectIndex: Uint8Array
   /** True when the device follows a motherboard ARGB signal instead of uploaded animations. */
   syncsMotherboardLight: boolean
+  /** Fan duty per channel, resent unchanged when the device is re-addressed. */
+  currentPwm: Uint8Array
   layout: WirelessLayout
 }
 
@@ -244,6 +253,7 @@ export function parseDiscovery(reply: Uint8Array, pages: number): DiscoveryResul
       fanTypes,
       effectIndex: record.slice(20, 24),
       syncsMotherboardLight: (record[28]! & 0x40) !== 0,
+      currentPwm: record.slice(36, 40),
       layout: deviceLayout(deviceType, fanTypes, record[19]!)
     })
   }
@@ -253,6 +263,60 @@ export function parseDiscovery(reply: Uint8Array, pages: number): DiscoveryResul
 /** Devices bound to the given master (the TX dongle we drive). */
 export function boundTo(devices: WirelessDevice[], master: Uint8Array): WirelessDevice[] {
   return devices.filter((device) => sameBytes(device.masterMac, master))
+}
+
+/** A device with no master: it lost its pairing (devices forget it when they lose power). */
+export function isMasterless(device: WirelessDevice): boolean {
+  return device.masterMac.every((byte) => byte === 0)
+}
+
+export const isValidRx = (rx: number): boolean => rx > 0 && rx < RX_SLOT_LIMIT
+
+/* -------------------------------- Pairing -------------------------------- */
+
+/**
+ * Re-addresses a device to a master: the vendor software sends this at every
+ * start for the devices it has paired, since devices forget their master when
+ * they lose power. `slot` is the device's position in the pairing list.
+ */
+export function addressFrame(
+  device: WirelessDevice,
+  masterMac: Uint8Array,
+  rx: number,
+  channel: number,
+  slot: number
+): Uint8Array {
+  const frame = new Uint8Array(RF_DATA_SIZE)
+  frame[0] = RF_SELECT
+  frame[1] = RF_SET_ADDRESS
+  frame.set(device.mac, 2)
+  frame.set(masterMac, 8)
+  frame[14] = rx
+  frame[15] = channel
+  frame[16] = slot
+  frame.set(device.currentPwm, 17)
+  return frame
+}
+
+/** Asks every device of the master to keep its current configuration. */
+export function saveConfigFrame(masterMac: Uint8Array): Uint8Array {
+  const frame = new Uint8Array(RF_DATA_SIZE)
+  frame[0] = RF_SELECT
+  frame[1] = RF_SAVE_CONFIG
+  frame.fill(0xff, 2, 8)
+  frame.set(masterMac, 8)
+  frame[14] = 0xff
+  return frame
+}
+
+/** Whether a device now follows the given master on the given slot and channel. */
+export function addressApplied(
+  device: WirelessDevice,
+  masterMac: Uint8Array,
+  rx: number,
+  channel: number
+): boolean {
+  return sameBytes(device.masterMac, masterMac) && device.rxType === rx && device.channel === channel
 }
 
 /** Channel used to reach a device: its own when valid, otherwise the master's. */

@@ -18,7 +18,12 @@ import { DiagnosticsService } from '@main/services/diagnostics-service'
 import { LightingStateService } from '@main/services/lighting-state-service'
 import { ProfileService } from '@main/services/profile-service'
 import { SettingsService } from '@main/services/settings-service'
-import { handBackToLConnect, lconnectState, takeOverFromLConnect } from '@main/system/lconnect'
+import {
+  handBackToLConnect,
+  lconnectPairedDevices,
+  lconnectState,
+  takeOverFromLConnect
+} from '@main/system/lconnect'
 import { WHITE } from '@shared/color'
 import { DEFAULT_HEADER_LEDS } from '@shared/hardware'
 import type {
@@ -38,6 +43,7 @@ import type {
 import {
   AppSettingsSchema,
   DeviceSettingsMapSchema,
+  LianliPairingSchema,
   LightingStateSchema,
   ProfileStoreSchema
 } from '@shared/schemas'
@@ -140,6 +146,12 @@ export class Application {
       hostScript: join(paths.mainDirectory, 'icue-host.js'),
       logger: fileLogger.scope('icue')
     })
+    const pairingStore = new JsonStore(
+      store('lianli.json'),
+      LianliPairingSchema,
+      () => LianliPairingSchema.parse({}),
+      storeLogger
+    )
     const lianli = new LianliBackend({
       // The OpenRGB engine ships libusb; the Lian Li dongles use the WinUSB driver it talks to.
       dllPath: paths.isPackaged
@@ -149,8 +161,13 @@ export class Application {
       owner: {
         name: 'L-Connect 3',
         state: lconnectState,
+        pairedDevices: lconnectPairedDevices,
         takeOver: takeOverFromLConnect,
         handBack: handBackToLConnect
+      },
+      pairing: {
+        load: () => pairingStore.load().paired,
+        save: (paired) => pairingStore.save({ paired })
       },
       logger: fileLogger.scope('lianli')
     })
@@ -165,6 +182,8 @@ export class Application {
   start(): void {
     const settings = this.settings.get()
     this.system.setTheme(settings.theme)
+    // Re-applied at every start, so an installed copy registers itself even if the option was set elsewhere.
+    this.system.setLaunchAtLogin(settings.launchAtLogin)
 
     this.hub.events.on('status', () => this.scheduleSnapshot())
     this.hub.events.on('devices', (devices) => {

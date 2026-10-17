@@ -24,7 +24,8 @@ export class SettingsService {
     const merged = AppSettingsSchema.parse({
       ...previous,
       ...patch,
-      engine: { ...previous.engine, ...patch.engine }
+      engine: { ...previous.engine, ...patch.engine },
+      pcModel: { ...previous.pcModel, ...patch.pcModel }
     })
     this.settings = merged
     this.store.save(merged)

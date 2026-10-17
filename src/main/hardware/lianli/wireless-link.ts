@@ -9,15 +9,18 @@ import {
   EP_OUT,
   HEADER_REPEATS,
   MASTER_CHANNELS,
+  RX_BROADCAST,
   RX_IDS,
   TX_IDS,
   USB_PACKET_SIZE,
+  addressFrame,
   discoveryPages,
   discoveryQuery,
   masterQuery,
   parseDiscovery,
   parseMasterReply,
   rgbFrames,
+  saveConfigFrame,
   trafficChannel,
   usbPackets,
   type DiscoveryResult,
@@ -34,6 +37,11 @@ const DISCOVERY_PAGE_BYTES = 512
 const GAP_AFTER_RGB_MS = 10
 const GAP_BETWEEN_CHUNKS_MS = 1
 const GAP_BETWEEN_HEADER_REPEATS_MS = 20
+/** Pairing frames are repeated because the device may miss some while it scans channels. */
+const ADDRESS_REPEATS = 6
+const GAP_BETWEEN_ADDRESS_REPEATS_MS = 30
+const SAVE_CONFIG_REPEATS = 3
+const GAP_BETWEEN_SAVE_REPEATS_MS = 200
 
 export class WirelessLink {
   private pages = 1
@@ -93,17 +101,43 @@ export class WirelessLink {
     }
     const channel = trafficChannel(device.channel, this.masterChannel)
     rgbFrames(upload, device.mac, this.masterMac).forEach((frame, index) => {
-      const repeats = index === 0 ? HEADER_REPEATS : 1
-      for (let repeat = 0; repeat < repeats; repeat++) {
-        for (const packet of usbPackets(frame, channel, rxTarget)) {
-          this.tx.write(packet, USB_TIMEOUT_MS)
-          sleepSync(GAP_BETWEEN_CHUNKS_MS)
-        }
-        if (repeat + 1 < repeats) sleepSync(GAP_BETWEEN_HEADER_REPEATS_MS)
-      }
+      this.send(frame, channel, rxTarget, index === 0 ? HEADER_REPEATS : 1, GAP_BETWEEN_HEADER_REPEATS_MS)
     })
     this.lastTarget = target
     this.lastSentAt = Date.now()
+  }
+
+  /**
+   * Points a device that lost its pairing back to this master, on slot `rx`.
+   * Sent on the channel the device reports (it may not listen on ours yet),
+   * to every slot: the MAC inside the frame selects the recipient.
+   */
+  readdress(device: WirelessDevice, rx: number, slot: number): void {
+    const frame = addressFrame(device, this.masterMac, rx, this.masterChannel, slot)
+    const channel = device.channel === 0 ? this.masterChannel : device.channel
+    this.send(frame, channel, RX_BROADCAST, ADDRESS_REPEATS, GAP_BETWEEN_ADDRESS_REPEATS_MS)
+    this.lastTarget = ''
+  }
+
+  /** Asks the devices of this master to keep their configuration, as the vendor software does after pairing. */
+  saveConfig(): void {
+    this.send(
+      saveConfigFrame(this.masterMac),
+      this.masterChannel,
+      RX_BROADCAST,
+      SAVE_CONFIG_REPEATS,
+      GAP_BETWEEN_SAVE_REPEATS_MS
+    )
+  }
+
+  private send(frame: Uint8Array, channel: number, rxTarget: number, repeats: number, gapMs: number): void {
+    for (let repeat = 0; repeat < repeats; repeat++) {
+      for (const packet of usbPackets(frame, channel, rxTarget)) {
+        this.tx.write(packet, USB_TIMEOUT_MS)
+        sleepSync(GAP_BETWEEN_CHUNKS_MS)
+      }
+      if (repeat + 1 < repeats) sleepSync(gapMs)
+    }
   }
 }
 
